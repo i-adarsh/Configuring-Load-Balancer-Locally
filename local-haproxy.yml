@@ -1,0 +1,42 @@
+- hosts: webserver
+  tasks:
+  # - name: Print all available facts
+  #   ansible.builtin.debug:
+  #       var: ansible_facts
+  - name: "Installing Apache Webserver"
+    package:
+        name: "httpd"
+        state: present
+  - name: "Copying Files"
+    template:
+        src: "index.html.j2"
+        dest: "/var/www/html/index.html"
+    register: coyping
+  - name: "Starting Apache Webserver"
+    service: 
+        name: "httpd"
+        state: "restarted"
+    when: coyping.changed
+  - name: "Stopping Firewall Service"
+    command: "systemctl stop firewalld"
+
+
+
+- hosts: loadbalancer
+  tasks: 
+  - name: "Installing Loadbalancer Service"
+    package: 
+        name: "haproxy"
+        state: present
+  - name: "Configuring Backend Server"
+    template:
+        src: "haproxy.cfg.j2"
+        dest: "/etc/haproxy/haproxy.cfg"
+    register: configuring
+  - name: "Starting Loadbalancer Service"
+    service: 
+        name: "haproxy"
+        state: "restarted"
+    when: configuring.changed
+  - name: "Stopping Firewall Service"
+    command: "systemctl stop firewalld"
